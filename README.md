@@ -1,621 +1,108 @@
-# Webpack External Import
-> **import() URLs and other external resources from third parties, or other webpack builds themselves!**
+# Monorepo Starter
 
-<p align="center">
-    
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-  <a href="https://www.npmjs.com/package/webpack-external-import">
-    <img src="https://img.shields.io/npm/v/webpack-external-import.svg" alt="Version" />
-  </a>
+> Note - this starter is still a work in progress and some features described below have not been set up yet
 
-  <a href="https://www.npmjs.com/package/webpack-external-import">
-    <img src="https://img.shields.io/npm/dt/webpack-external-import.svg" alt="Downloads" />
-  </a>
+> An example setup of how to do a monorepo, used in our [Monorepo Getting Started Guide](https://github.com/Thinkmill/monorepo/blob/master/GETTING_STARTED.md)
 
-  <a href="https://www.npmjs.com/package/webpack-external-import">
-    <img src="https://img.shields.io/npm/dm/webpack-external-import.svg" alt="License" />
-  </a>
-  
-  <a href="https://www.npmjs.com/package/webpack-external-import">
-    <img src="https://img.shields.io/npm/l/webpack-external-import.svg" alt="License" />
-  </a>
-</p>
+> Usable as a template from github as a fully setup monorepo - we configure the monorepo tooling so you can configure the rest however you want
 
-```shell
-$ yarn  webpack-external-import
-```
-*This project is under active development*
+## Using this Starter
 
-**To jump to the _development_ section [click here](#development)
+1. Clone this repository, or click the `use this template` button on Github.
+2. Delete packages you do not need, and add your own packages in the folder that makes most sense.
+3. Run `yarn`
+4. Start the server using `yarn start:server`
+5. Start the website using `yarn start:next`
+6. Visit `http://localhost:3000/` to see it running 😎
 
+You are now ready to start developing within the monorepo!
 
+If you are interested in how to further configure your project, or want more information on why it is set up like this, check out our [Monorepo Style Guide](https://github.com/Thinkmill/monorepo)
 
-# Installation
+There is als a readme in each folder, to help explain why we have placed this folder there.
 
-### npm
+## Working in a monorepo
 
-```sh
-npm install webpack-external-import --save
-```
+We have a [working in monorepos](https://github.com/Thinkmill/monorepo/blob/master/working-in-a-monorepo.md) section in our style guide with advice on how to work with this monorepo.
 
-### Yarn
+## What is included in this starter
 
-```sh
-yarn add webpack-external-import --save
-```
+### Packages set up
 
-## Getting Started
-
-1.  Add `webpack-external-import/webpack` to your webpack plugins:
-```js
-// techblog.webpack.config.js
-const URLImportPlugin = require('webpack-external-import/webpack')
-{
-    plugins: [
-        new URLImportPlugin({
-          manifestName: 'website-one'
-        })
-    ]
-}
-```
-
-2. Add the `import()` polyfill (recommended)
-```js
-// index.js
-import 'webpack-external-import/polyfill';
-
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App.jsx';
-
-ReactDOM.render(<App />, document.getElementById('app'));
-```
-3. If you are interleaving webpack bundles, load their manifests
-```js
-  import {corsImport} from "webpack-external-import"
-  // if importing on the same domain and CORS isnt an issue
-  import(/* webpackIgnore:true */'http://localhost:3002/importManifest.js')
-
-  // if you need to import from a third party where CORS is an issue
-  corsImport('http://localhost:3002/importManifest.js')
-```
-4. import an external resource 
-We use raw `import()` with a polyfill to act as a script loader. We also have a fallback script loader for loading CORS. 
-
-```js
-// App.jsx
-// import a chunk from another website build with webpack-external-import
-  import {corsImport} from "webpack-external-import"
-
-  componentDidMount() {
-      corsImport('http://localhost:3002/importManifest.js').then(() => {
-        this.setState({ manifestLoaded: true });
-        importDependenciesOf('http://localhost:3002', 'website-two', 'TitleComponent').then((url) => {
-          this.setState({ titleUrl: url });
-        });
-  
-        // if CORS isnt a problem, you can use native import (its polyfilled) 
-        import(/* webpackIgnore:true */getChunkPath('http://localhost:3002', 'website-two', 'SomeExternalModule.js')).then(() => {
-          console.log('got module, will render it in 2 seconds');
-          setTimeout(() => {
-            this.setState({ loaded: true });
-          }, 2000);
-        });
-      });
-    }
-```
-
-Or with JSX and a react component
-```js
-import {ExternalComponent, getChunkPath} from 'webpack-external-import'
- render() {
-    const { manifestLoaded } = this.state;
-
-    return (
-      <div>
-        <HelloWorld />
-        { manifestLoaded && <ExternalComponent src={getChunkPath('http://localhost:3002', 'website-two', 'TitleComponent.js')} module="TitleComponent" export="Title" title="Some Heading" />}
-      </div>
-    );
-  }
-```
-
-## What is the use of  `webpack-external-import` ?
-
-- **Load components over the wire** - Pull in components at runtime.
-- **Build leaner micro-frontends (MFE)** - 
-Micro-frontends can share bundle chunks and resources with each other while remaining self-contained, removing needless code duplication.
-- **Split a large, multi-team app into separate deployable chunks while keeping it as one SPA** - Large apps can be split into separate feature bundles that can be deployed independently, reducing deployment bottlenecks.
-- **Manage common js/vendor files automatically.** - Instead of dealing with peer dependencies, externals, or anything else, you can load the dependency from a remote source.
-- **LOSA Style frontend architecture** - Run multiple apps on a single page.
-- **FOSA Style frontend orchestration** - Powerful frontend orchestration, self-organizing application architecture. Many builds act as one
-
-
-### Advanced Setup - Injecting Webpack modules from another build
-
-Use the webpack plugin to inject webpack modules from another build into your build. 
-
-_**Important**: Make sure manifestName_ is unique per webpack build.
-If you have multiple builds, they all need to have a unique manifestName
-
-**webpack.config.js**
-```js
-const URLImportPlugin = require('webpack-external-import/webpack')
-{
-    plugins: [
-        new URLImportPlugin({
-          manifestName: 'website-one'
-        })
-    ]
-}
-```
-
-
-## Example Usage
-Pretend we have two separate apps that each have their _independent_ build.  We want to share a module from one of our apps with the other.
-
-To do this, we add an `externalize` comment to the module. The Externalize magic comment tells the plugin to make the module available externally with the name `ExampleModule`:
-
-
-<table>
-<tr>
-<th>
-<!-- empty -->
-</th>
-<th>
-Application A
-</th>
-<th>
-Application B 
-</th>
-</tr>
-<tr>
-
-<td>
-  <strong>Provider: Javascript Asset</strong>
-</td>
-
-<td>
-
-    
-```js
-// Title.js
-
-import React from 'react';
-
-export 
- const Title = ({title}) => {
-  return title
-}
-
-export 
- const alert = (message) => {
-  alert(message)
-}
-
-
-/*externalize:ExampleModule*/
-```
-
-</td>
-
-</tr>
-<tr>
-
-<td>
-    <strong>
-        Provider: <br/>Code-Splits <br/>asset into title-cnk
-   </strong>
-</td>
-
-<td>
-
-empty
-<td>
-
-<td>empty<td>
-
-</tr>
-
-<tr>
-<td>
-    <strong>Consumer File</strong>
-</td>
-<td><!--        --></td>
-
-<td>
-
-```js
-    
-// App.js
-
-import(/* webpackIgnore:true */'http://website1.com/js/ExampleModule.js')
-.then(()=>{
-  const ExampleModule = __webpack_require__("ExampleModule");
-  ExampleModule.alert('custom alert')
-});
-    
-```
-
-</td>
-</tr>
-
-<tr>
-<td>
-    <strong>React Example</strong>
-</td>
-    
-<td><!--        --></td>
-
-<td>
-
-```js
-import {
-  ExternalComponent
-} from 'webpack-external-import'
-
-const SomeComponent = (props)=>{
-  return (
-    <ExternalComponent 
-    src={
-      this.state.url
-    } 
-    module="ExampleModule"
-    export='Title' 
-    title={'Some Heading'}
-       />
-  )
-}
-```
-</td>
-</tr>
-</table>
-
-
-## Explanation
-    
-Pretend we have two separate apps that each have their own independent build. We want to share a module from one of our apps with the other.
-    
-To do this, we add an externalize comment to the module. This tells the plugin to make the module available externally with the name `ExampleModule` and webpack will chunk this file into `dist/ExampleModule.js`
-
-```js
-// Title.js
-
-import React from 'react';
-
-export const Title = ({title}) => {
-  return (<h1>{title}</h1>)
-}
-
-export const alert = (message) => {
-  alert(message)
-}
-
-
-/*externalize:ExampleModule*/
+We have set up three different folders to put packages, based on their needs, each of which can include new packages. Here is what you have to start:
 
 ```
-
-The `ExampleModule` can now be pulled into our other app using `import`:
-
-```js
-import(/* webpackIgnore:true */'http://website1.com/js/ExampleModule.js').then(({ExampleModule})=>{
-  ExampleModule.alert('custom alert')
-});
+- packages/
+    - button
+- apps/
+    - next-app
+- services/
+    - graphql-api
+- websites/
 ```
 
-There is also a React component, `ExternalComponent`, that can be useful for importing React components:
-
-```js
-import {ExternalComponent} from 'webpack-external-import'
-
-()=>{
-  return (
-    <ExternalComponent src={helloWorldUrl} module="ExampleModule" export='Title' title={'Some Heading'} cors/>
-  )
-}
-```
-
-## Full Example
-
-```js
-// WEBSITE-ONE
-//app.js
-
-import React, {Component} from 'react';
-import {hot} from 'react-hot-loader';
-import HelloWorld from './components/hello-world';
-import {ExternalComponent,corsImport} from 'webpack-external-import'
-
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      titleUrl: null,
-      manifestLoaded: false,
-      loaded: false,
-    };
-  }
-
-  componentDidMount() {
-    corsImport('http://localhost:3002/importManifest.js').then(() => {
-      this.setState({ manifestLoaded: true });
-      importDependenciesOf('http://localhost:3002', 'website-two', 'TitleComponent').then((url) => {
-        this.setState({ titleUrl: url });
-      });
-
-      import(/* webpackIgnore:true */getChunkPath('http://localhost:3002', 'website-two', 'SomeExternalModule.js')).then(() => {
-        console.log('got module, will render it in 2 seconds');
-        setTimeout(() => {
-          this.setState({ loaded: true });
-        }, 2000);
-      });
-    });
-  }
+To determine where to place a new package:
 
-  renderDynamic = () => {
-    const { loaded } = this.state;
-    if (!loaded) return null;
+- If it is designed to be consumed by other packages, and not run on its own, put it in the `/packages` folder. These may be published to npm, but can also include private packages.
+- If it is a user-facing app or website, it should live in the `/apps` folder
+- If it is a back-end service or node app, it should live in the `/services` folder
 
-    return __webpack_require__('SomeExternalModule').default();
-  }
+The `website/` directory should be used for a documentation website, or other repository-wide website.
 
-  render() {
-    const { manifestLoaded, titleUrl } = this.state;
-    if (!manifestLoaded) {
-      return 'Loading...';
-    }
+> We recommend deleting any of these folders that you don't intend to use in your project
 
+### Tools we set up
 
-    return (
-      <div>
-        <HelloWorld />
-        {titleUrl && <ExternalComponent src={titleUrl} module="TitleComponent" export="Title" title="Some Heading" />}
-        {this.renderDynamic()}
-      </div>
-    );
-  }
-}
+- [Yarn Workspaces](https://legacy.yarnpkg.com/en/docs/workspaces/)
+- [Preconstruct](https://preconstruct.tools/)
+- [Manypkg](https://github.com/thinkmill/manypkg)
+- [Changesets](https://github.com/changesets/changesets)
+- [Babel](https://babeljs.io/)
+- [Jest](https://jestjs.io/)
+- [Eslint](https://eslint.org/) (but there are no rules yet)
 
-export default App
+Each of these tools have configuration specific to their usage in a monorepo, which has been configured for you. See our [style guide](https://github.com/Thinkmill/monorepo) for more information on the configuration for each tool.
 
-//WEBSITE-TWO
-//App.js
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      component: null
-    };
-  }
+If you plan to use any of the following, please see the style guide for how to set them up:
 
-  componentDidMount() {
-    import('./components/hello-world').then((HelloWorld) => {
-      this.setState({component: HelloWorld.default})
-    })
-  }
+### Installing new packages
 
-  render() {
-    if (!this.state.component) return <div/>
-    const {component: HelloWorld} = this.state
-    return <HelloWorld title="Hello from React webpack"/>;
+When you install new packages, you will need to determine if they are intended to be used by the monorepo as a whole, or by an individual package.
 
-  }
-}
+If it is intended for use by the monorepo as a whole, add the package to the root `package.json` and run `yarn` to install.
 
-export default hot(module)(App);
+If it is intended for use by an individual package, add it to that's `package.json` and run `yarn` to install.
 
-// Title.js
+Within a monorepo, all of your packages must use the same version of external packages. `yarn manypkg check` will tell you if you have any problems. `yarn manypkgs fix` will fix all problems. You can find out more about these rules in the [manypkg docs](https://github.com/thinkmill/manypkg)
 
-import React from 'react';
+### Quick Start Guide for some other tools
 
-export const Title = ({title}) => {
-  return (<h1>{title}</h1>)
-}
+<details><summary>- next.js</summary>
 
+1. Use the existing `/website` folder, or create a folder for a new website in `/apps/your-app-name`
+2. [Follow the normal Next.js setup instructions](https://nextjs.org/docs/getting-started)
+   - where the guide asks you to perform terminal commands (such as installing packages), run them from your app's folder, not from the repository root.
+3. Done.
 
-/*externalize:TitleComponent*/
+We also have additional guides to [using next.js with monorepos](https://github.com/Thinkmill/monorepo#nextjs)
 
+</details>
 
-```
+- [Gatsby](https://github.com/Thinkmill/monorepo#gatsby)
+- TypeScript
 
-## API:
+### Workflows set up
 
-```js
-// webpack.config.js
+- Install: run `yarn`
+  - This uses yarn workspaces to manage installation of dependencies for all your packages.
+  - This also runs a `postinstall` hook that will validate your monorepo setup (using `Manykpkg`), and set your packages up for dev (using `Preconstruct`)
+- Test: run `yarn test`, which will run Jest tests.
+- Build: run `yarn build`
+  - This uses Preconstruct to build `dist` files from the source of all packages in `/packages` and `/apps`.
+  - For any build work you want done outside of Preconstruct building dists, you will need to add to this script.
+- Release: run `yarn release`
+  - this will run the build command, and then run `changeset publish`
+- Clean: run `yarn clean`
+  - this uses `Manypkg` to remove the `node_modules` and `dist` folders from each package in the repository, as well as from the root. It can be used to 'clean out' installed/built files to ensure running `yarn` or `build` gets you fresh information.
 
-module.exports = {
-  output: {
-    publicPath
-  },
-  plugins: [
-    new URLImportPlugin(options)
-  ]
-}
-```
-
-### `options.fileName`
-
-Type: `String`<br>
-Default: `manifest.json`
-
-The manifest filename in your output directory.
-
-### `options.publicPath`
-
-Type: `String`
-Default: `output.publicPath`
-
-A path prefix that will be added to values of the manifest.
-
-### `options.basePath`
-
-Type: `String`
-
-A path prefix for all keys. Useful for including your output path in the manifest.
-
-
-### `options.writeToFileEmit`
-
-Type: `Boolean`<br>
-Default: `false`
-
-If set to `true` will emit to build folder and memory in combination with `webpack-dev-server`
-
-
-### `options.seed`
-
-Type: `Object`<br>
-Default: `{}`
-
-A cache of key/value pairs to used to seed the manifest. This may include a set of [custom key/value](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/manifest.json) pairs to include in your manifest or may be used to combine manifests across compilations in [multi-compiler mode](https://github.com/webpack/webpack/tree/master/examples/multi-compiler). To combine manifests, pass a shared seed object to each compiler's ManifestPlugin instance.
-
-### `options.filter`
-
-Type: `Function(FileDescriptor): Boolean`
-
-Filter out files. [FileDescriptor typings](#filedescriptor)
-
-### `options.test`
-
-Type: `Function(Object, FileDescriptor): Object`<br>
-Default: `src`
-
-Test resource path to see if plugin should apply transformations
-
-
-### `options.map`
-
-Type: `Function(FileDescriptor): FileDescriptor`
-
-Modify files details before the manifest is created. [FileDescriptor typings](#filedescriptor)
-
-### `options.sort`
-
-Type: `Function(FileDescriptor): number`
-
-Sort files before they are passed to `generate`. [FileDescriptor typings](#filedescriptor)
-
-### `options.generate`
-
-Type: `Function(Object, FileDescriptor): Object`<br>
-Default: `(seed, files) => files.reduce((manifest, {name, path}) => ({...manifest, [name]: path}), seed)`
-
-Create the manifest. It can return anything as long as it's serializable by `JSON.stringify`. [FileDescriptor typings](#filedescriptor)
-
-### `options.serialize`
-
-Type: `Function(Object): string`<br>
-Default: `(manifest) => JSON.stringify(manifest, null, 2)`
-
-Output manifest file in a different format then json (i.e., yaml).
-
-### **ExternalComponent**
-React Component
-
-#### **Props**:
-
-**`src`: string** - Import source URL
-
-**`module`: string** - Module name, must match what was declared using /*externalize:ExampleModule*/
-
-**`export`: string** - The named export to use as a component from the module being imported
-
-**`cors`: bool** - If asset is being loaded from a url which throws a CORS error. This will inject a script to the browser
-
-**`ref`: React.createRef** - Pass a react ref which can be passed down as a ref to the interleaved component
-
-**`extendClass`: class** - Allows `class Example extends OtherComponent {}` if you want to interleave an extended class. 
-
-####Example of `extendClass`
-```js 
-// Website1
-import OriginalComponent from './index.js'
-<ExternalComponent src={helloWorldUrl} module="ExampleModule" export='Title' extendClass={OriginalComponent}/>
-
-
-// Website2
-export default OriginalComponent => {
-  return class ExtendedComponent extends OriginalComponent {
-    componentDidMount() {
-      if (super.componentDidMount) super.componentDidMount();
-      this.setState();
-    }
-  };
-};
-
-/* externalize: SomeExtendedComponent */
-
-```
-
-#### Usage
-```js
-<ExternalComponent src={helloWorldUrl} module="ExampleModule" export='Title' title={'Some Heading'}/>
-```
-
-## FileDescriptor
-
-```ts
-FileDescriptor {
-  path: string;
-  name: string | null;
-  isInitial: boolean;
-  isChunk: boolean;
-  chunk?: Chunk;
-  isAsset: boolean;
-  isModuleAsset: boolean;
-}
-```
-
-### The entry manifest
-
-Each webpack build using the webpack plugin emits a manifest file to the build output directory.
-
-The manifest allows you to find a chunk that you want, even if the name has been hashed.
-
-Below is an example of using the manifest.
-
-In this file, I am importing code from another website/build. My application is loading website two's manifest, which is automatically added to `window.entryManifest` under the `manifestName` I set in the webpack plugin. After that, I'm importing a chunk from website-two, in this case - the chunk is code-split. 
-
-```js
-    componentDidMount() {
-      corsImport('http://localhost:3002/importManifest.js').then(() => {
-        this.setState({ manifestLoaded: true });
-        importDependenciesOf('http://localhost:3002', 'website-two', 'TitleComponent').then((url) => {
-          this.setState({ titleUrl: url });
-        });
-  
-        import(/* webpackIgnore:true */getChunkPath('http://localhost:3002', 'website-two', 'SomeExternalModule.js')).then(() => {
-          console.log('got module, will render it in 2 seconds');
-          setTimeout(() => {
-            this.setState({ loaded: true });
-          }, 2000);
-        });
-      });
-    }
-```
-
-## DEMO
-How to start using the demo
-In the *root directory*, run the following
-1) run `yarn install`
-2) run `yarn demo` from the root directory
-3) browse to [localhost:3001](http://localhost:3001)  or [localhost:3002](http://localhost:3002) 
-
-This command will install, all dependencies, build the source for the plugin, install the demo dependencies, run all builds and start serving
-
-## Development & Debugging
-How to start the demo in debug mode, using node --inspect and connecting to a chrome debugger
-
-> This is mainly for debugging the webpack plugin
- 
-In the root directory, run the following
-1) `yarn install`
-2) `yarn demo:debug` from the root directory
-3) browse to [localhost:3001](http://localhost:3001)  or [localhost:3002](http://localhost:3002) 
-
-**Note:** _[localhost:3001](http://localhost:3001) is the "consumer app, while the other is the provider app". Both apps work independently and you should check both of them out (they are extremely basic)_
-
-
-Open chrome dev tools and you should see the box highlighted below appear, click on it to connect to the webpack debugger 
-![GitHub Logo](/docs/inspect.png)
+We strongly recommend using Changesets for versioning as well, here is a [base explanation of the workflow](https://github.com/atlassian/changesets/blob/master/docs/intro-to-using-changesets.md)

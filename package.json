@@ -35,7 +35,7 @@
     "eslint": "^6.8.0",
     "eslint-plugin-prettier": "^3.1.2",
     "jest": "^25.1.0",
-    "prettier": "^2.0.0"
+    "prettier": "^3.0.0"
   },
   "preconstruct": {
     "packages": [
